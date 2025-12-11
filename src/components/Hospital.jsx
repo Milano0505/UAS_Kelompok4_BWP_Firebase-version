@@ -8,14 +8,11 @@ export default function Hospital({
   selectedAvatar,
   keyboardEnabled,
 }) {
-  const [player, setPlayer] = useState({ x: 344, y: 623 });
+  const MAP_W = 736;
+  const MAP_H = 736;
 
-  function preloadImages(srcArray) {
-    srcArray.forEach((src) => {
-      const img = new Image();
-      img.src = src;
-    });
-  }
+  const [player, setPlayer] = useState({ x: 344, y: 623 });
+  const containerRef = useRef(null);
 
   const moveInterval = useRef(null);
   const lastDir = useRef(null);
@@ -25,26 +22,114 @@ export default function Hospital({
   const [dir, setDir] = useState("idle");
   const [activity, setActivity] = useState(null);
   const [effectType, setEffectType] = useState(null);
-
   const [actionPanel, setActionPanel] = useState({
     visible: false,
-    x: 0,
-    y: 0,
     actions: [],
   });
 
+  const [scale, setScale] = useState(1);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  // =============================
+  // RESPONSIVE SCALE
+  // =============================
+  useEffect(() => {
+    function updateScale() {
+      const width = containerRef.current?.offsetWidth || MAP_W;
+      if (window.innerWidth <= 768) {
+        setScale(1);
+        setIsMobile(true);
+      } else {
+        setScale(width / MAP_W);
+        setIsMobile(false);
+      }
+    }
+
+    updateScale();
+    window.addEventListener("resize", updateScale);
+    return () => window.removeEventListener("resize", updateScale);
+  }, []);
+
+  // =============================
+  // MOVEMENT
+  // =============================
+  function move(dir) {
+    const speed = 20;
+    setPlayer((prev) => {
+      let { x, y } = prev;
+
+      if (dir === "up") y -= speed;
+      if (dir === "down") y += speed;
+      if (dir === "left") x -= speed;
+      if (dir === "right") x += speed;
+
+      x = Math.max(0, Math.min(MAP_W - 40, x));
+      y = Math.max(0, Math.min(MAP_H - 60, y));
+
+      setDir(
+        dir === "up"
+          ? "back"
+          : dir === "down"
+          ? "idle"
+          : dir === "right"
+          ? "right"
+          : "left"
+      );
+
+      return { x, y };
+    });
+  }
+
+  function startHold(d) {
+    lastDir.current = d;
+    move(d);
+    if (moveInterval.current) clearInterval(moveInterval.current);
+    moveInterval.current = setInterval(() => move(d), 120);
+  }
+
+  function stopHold() {
+    if (moveInterval.current) clearInterval(moveInterval.current);
+    moveInterval.current = null;
+  }
+
+  // =============================
+  // KEYBOARD
+  // =============================
+  function onKeyDown(e) {
+    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key))
+      e.preventDefault();
+    if (e.repeat) return;
+    if (e.key === "ArrowUp") startHold("up");
+    if (e.key === "ArrowDown") startHold("down");
+    if (e.key === "ArrowLeft") startHold("left");
+    if (e.key === "ArrowRight") startHold("right");
+  }
+
+  function onKeyUp() {
+    stopHold();
+  }
+
+  useEffect(() => {
+    if (!keyboardEnabled) return;
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    };
+  }, [keyboardEnabled]);
+
+  // =============================
+  // ACTIVITY SYSTEM
+  // =============================
   function perTickEffectMultiple(ticks) {
     if (!currentPerTickEffectRef.current) return;
-    for (let i = 0; i < ticks; i++) {
-      currentPerTickEffectRef.current();
-    }
+    for (let i = 0; i < ticks; i++) currentPerTickEffectRef.current();
   }
 
   function startActivity(name, duration, perTickEffect) {
     setActivity({ name, total: duration, remaining: duration });
-
     setState((s) => ({ ...s, activitiesDone: s.activitiesDone + 1 }));
-
     currentPerTickEffectRef.current = perTickEffect;
 
     if (name === "Checkup") setEffectType("clean-effect");
@@ -54,10 +139,8 @@ export default function Hospital({
     activityTimerRef.current = setInterval(() => {
       setActivity((a) => {
         if (!a) return null;
-
         const left = a.remaining - 1;
         perTickEffect();
-
         if (left <= 0) {
           clearInterval(activityTimerRef.current);
           currentPerTickEffectRef.current = null;
@@ -65,7 +148,6 @@ export default function Hospital({
           showMessage(`${name} finished!`);
           return null;
         }
-
         return { ...a, remaining: left };
       });
     }, 1000);
@@ -132,124 +214,43 @@ export default function Hospital({
     },
   ];
 
+  const getScaledRect = (rect) => {
+    const width = containerRef.current?.offsetWidth || MAP_W;
+    const height = containerRef.current?.offsetHeight || MAP_H;
+    return {
+      left: isMobile ? (rect.x / MAP_W) * width : rect.x * scale,
+      top: isMobile ? (rect.y / MAP_H) * height : rect.y * scale,
+      right: isMobile
+        ? ((rect.x + rect.w) / MAP_W) * width
+        : (rect.x + rect.w) * scale,
+      bottom: isMobile
+        ? ((rect.y + rect.h) / MAP_H) * height
+        : (rect.y + rect.h) * scale,
+    };
+  };
+
   useEffect(() => {
-    preloadImages([hospitalBg]);
-  }, []);
-
-  function isOverlap(a, b) {
-    return !(
-      a.right < b.left ||
-      a.left > b.right ||
-      a.bottom < b.top ||
-      a.top > b.bottom
-    );
-  }
-
-  function move(dir) {
-    const speed = 20;
-
-    setPlayer((prev) => {
-      let x = prev.x,
-        y = prev.y,
-        dx = 0,
-        dy = 0;
-
-      if (dir === "up") dy = -speed;
-      if (dir === "down") dy = speed;
-      if (dir === "left") dx = -speed;
-      if (dir === "right") dx = speed;
-
-      x += dx;
-      y += dy;
-
-      x = Math.max(0, Math.min(736 - 40, x));
-      y = Math.max(0, Math.min(736 - 60, y));
-
-      if (dy < 0) setDir("back");
-      else if (dy > 0) setDir("idle");
-      else if (dx > 0) setDir("right");
-      else if (dx < 0) setDir("left");
-
-      return { x, y };
+    const playerRect = getScaledRect({
+      x: player.x,
+      y: player.y,
+      w: 40,
+      h: 60,
     });
-  }
-
-  function startHold(dir) {
-    lastDir.current = dir;
-    move(dir);
-
-    if (moveInterval.current) clearInterval(moveInterval.current);
-
-    moveInterval.current = setInterval(() => {
-      move(lastDir.current);
-    }, 120);
-  }
-
-  function stopHold() {
-    lastDir.current = null;
-    if (moveInterval.current) {
-      clearInterval(moveInterval.current);
-      moveInterval.current = null;
-    }
-  }
-
-  function onKeyDown(e) {
-    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key))
-      e.preventDefault();
-
-    if (e.repeat) return;
-
-    if (e.key === "ArrowUp") startHold("up");
-    if (e.key === "ArrowDown") startHold("down");
-    if (e.key === "ArrowLeft") startHold("left");
-    if (e.key === "ArrowRight") startHold("right");
-  }
-
-  function onKeyUp() {
-    stopHold();
-  }
-
-  useEffect(() => {
-    if (!keyboardEnabled) return;
-
-    window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("keyup", onKeyUp);
-
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("keyup", onKeyUp);
-    };
-  }, [keyboardEnabled]);
-
-  useEffect(() => {
-    const pRect = {
-      left: player.x,
-      top: player.y,
-      right: player.x + 40,
-      bottom: player.y + 60,
-    };
-
     let inside = null;
-
     for (const a of areas) {
-      const aRect = {
-        left: a.x,
-        top: a.y,
-        right: a.x + a.w,
-        bottom: a.y + a.h,
-      };
-      if (isOverlap(pRect, aRect)) inside = a;
+      if (
+        !(
+          playerRect.right < getScaledRect(a).left ||
+          playerRect.left > getScaledRect(a).right ||
+          playerRect.bottom < getScaledRect(a).top ||
+          playerRect.top > getScaledRect(a).bottom
+        )
+      )
+        inside = a;
     }
-
-    if (!inside) {
-      setActionPanel({ visible: false });
-      return;
-    }
-
+    if (!inside) return setActionPanel({ visible: false });
     setActionPanel({
       visible: true,
-      x: player.x + 50,
-      y: player.y - 10,
       actions: [
         {
           label: inside.id === "exit" ? "Exit Hospital 🚪" : inside.label,
@@ -257,7 +258,7 @@ export default function Hospital({
         },
       ],
     });
-  }, [player]);
+  }, [player, scale, isMobile]);
 
   function showMessage(text) {
     const msg = document.createElement("div");
@@ -267,48 +268,60 @@ export default function Hospital({
     setTimeout(() => msg.remove(), 3000);
   }
 
+  const scaledPlayerRender = {
+    x: isMobile
+      ? (player.x / MAP_W) * (containerRef.current?.offsetWidth || MAP_W)
+      : player.x * scale,
+    y: isMobile
+      ? (player.y / MAP_H) * (containerRef.current?.offsetHeight || MAP_H)
+      : player.y * scale,
+  };
+
   return (
-    <div className="hospital-container">
+    <div className="hospital-container" ref={containerRef}>
       <div
-        className="hospital-map"
+        className="hospital-map-wrapper"
         style={{
-          width: 736,
-          height: 736,
-          backgroundImage: `url(${hospitalBg})`,
-          backgroundSize: "cover",
-          position: "relative",
-          margin: "auto",
+          width: MAP_W,
+          height: MAP_H,
+          transform: !isMobile ? `scale(${scale})` : "none",
+          transformOrigin: "top center",
         }}
       >
-        <img
-          src={
-            dir === "left"
-              ? selectedAvatar.left
-              : dir === "right"
-              ? selectedAvatar.right
-              : dir === "back"
-              ? selectedAvatar.back
-              : selectedAvatar.idle
-          }
+        <div
+          className="hospital-map"
           style={{
-            position: "absolute",
-            left: player.x,
-            top: player.y,
-            width: 40,
-            height: 60,
+            width: "100%",
+            height: "100%",
+            backgroundImage: `url(${hospitalBg})`,
+            backgroundSize: "cover",
+            position: "relative",
           }}
-        />
+        >
+          <img
+            src={
+              dir === "left"
+                ? selectedAvatar.left
+                : dir === "right"
+                ? selectedAvatar.right
+                : dir === "back"
+                ? selectedAvatar.back
+                : selectedAvatar.idle
+            }
+            className="player-avatar"
+            style={{ left: scaledPlayerRender.x, top: scaledPlayerRender.y }}
+          />
 
-        {effectType && (
-          <div
-            className={`hospital-player-effect ${effectType}`}
-            style={{ left: player.x, top: player.y }}
-          ></div>
-        )}
+          {effectType && (
+            <div
+              className={`hospital-player-effect ${effectType}`}
+              style={{ left: scaledPlayerRender.x, top: scaledPlayerRender.y }}
+            />
+          )}
+        </div>
       </div>
 
-      {/* CONTROLS */}
-      <div className="controls" style={{ textAlign: "center", marginTop: 12 }}>
+      <div className="controls">
         <button onMouseDown={() => startHold("up")} onMouseUp={stopHold}>
           ▲
         </button>
@@ -325,20 +338,17 @@ export default function Hospital({
         </div>
       </div>
 
-      {/* ACTIVITY OVERLAY*/}
       {activity && (
         <div className="box activity-overlay">
           <h2>{activity.name}</h2>
           <div>
             {activity.remaining} / {activity.total}
           </div>
-
           <button
             className="fast-forward-btn"
             onClick={() => {
               clearInterval(activityTimerRef.current);
-              const ticksRemaining = activity.remaining;
-              perTickEffectMultiple(ticksRemaining);
+              perTickEffectMultiple(activity.remaining);
               setActivity(null);
               setEffectType(null);
               showMessage(`${activity.name} completed instantly!`);
@@ -349,9 +359,8 @@ export default function Hospital({
         </div>
       )}
 
-      {/* ACTION PANEL */}
       {actionPanel.visible && (
-        <div className="hospital-action-panel box">
+        <div className="hospital-action-panel">
           {actionPanel.actions.map((a, i) => (
             <button key={i} className="action-btn" onClick={a.exec}>
               {a.label}

@@ -349,7 +349,7 @@ body {
   width: 100vw;
   height: 100vh;
 
-  z-index: 9999;
+  z-index: 10000;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1798,5 +1798,602 @@ LAYER ACTIVITY EFFECTS
   }
   100% {
     transform: translateX(0) rotate(0deg);
+  }
+}
+
+/* ===========================
+   RESPONSIVE LAYOUT
+=========================== */
+
+@media (max-width: 768px) {
+  body {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .app-root {
+    height: auto;
+  }
+
+  .main {
+    height: auto;
+    flex-direction: column;
+  }
+
+  .status {
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 2px solid #333;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+  }
+
+  #map {
+    width: 100%;
+    height: 180px;
+  }
+
+  .loc {
+    width: 40px;
+    height: 40px;
+    font-size: 10px;
+    transform: scale(0.55);
+    transform-origin: top left;
+  }
+
+  .loc .koko img {
+    width: 48px;
+    height: auto;
+  }
+
+  #player {
+    width: 26px;
+    height: 38px;
+    transform: scale(0.6);
+    transform-origin: top left;
+  }
+
+  .player-avatar {
+    width: 26px !important;
+    height: 38px !important;
+  }
+
+  .player-name {
+    width: 70px;
+    font-size: 10px;
+    bottom: 45px;
+    margin-left: -22px;
+  }
+
+  .dropped-item {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 5%;
+    height: auto;
+    font-size: 2vw;
+  }
+
+  .controls {
+    position: fixed;
+    flex-direction: row;
+    align-items: center;
+    top: auto;
+    bottom: 5px;
+    right: 50%;
+    transform: translateX(50%);
+  }
+
+  .controls button {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+    margin: 2px;
+  }
+
+  .action-panel {
+    position: fixed;
+    left: 50%;
+    bottom: 60px;
+    transform: translateX(-50%);
+    z-index: 999;
+    padding: 10px 14px;
+    gap: 10px;
+  }
+
+  .header {
+    flex-direction: row;
+    height: auto;
+    padding: 10px;
+    gap: 5px;
+  }
+
+  .header .left,
+  .header .right {
+    gap: 5px;
+    flex-wrap: wrap;
+    flex-direction: column;
+  }
+
+  .header .title {
+    font-size: 18px;
+    text-align: center;
+    width: 100%;
+  }
+}
+
+/* ==========================================
+   HOME PAGE RESPONSIVE (≤768px)
+========================================== */
+@media (max-width: 768px) {
+  /* ROOT */
+  .home-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .home-map {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 736 / 552;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat;
+    position: relative !important;
+  }
+
+  .home-map .player-avatar {
+    width: 38px !important;
+    height: auto !important;
+    transform: translate(-50%, -50%);
+    position: absolute !important;
+  }
+
+  .player-effect {
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+  }
+
+  .home-action-panel {
+    position: fixed;
+    left: 50%;
+    bottom: 60px;
+    transform: translateX(-50%);
+    z-index: 999;
+
+    padding: 10px 14px;
+    border-radius: 10px;
+    display: flex;
+    gap: 10px;
+  }
+
+  .home-action-panel .action-btn {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .activity-overlay {
+    width: 85%;
+    position: fixed;
+    top: 140px;
+    right: 50%;
+    transform: translateX(50%);
+    padding: 18px;
+    z-index: 140;
+    text-align: center;
+  }
+
+  .activity-overlay h2 {
+    font-size: 18px;
+  }
+
+  .fast-forward-btn {
+    width: 100%;
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .home-container .controls {
+    position: fixed;
+    flex-direction: row;
+    align-items: center;
+    top: auto;
+    bottom: 5px;
+    right: 50%;
+    transform: translateX(50%);
+  }
+
+  .home-container .controls button {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+    margin: 2px;
+  }
+}
+
+/* ==========================================
+   MINE PAGE RESPONSIVE (≤768px)
+========================================== */
+@media (max-width: 768px) {
+  .mine-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .mine-map {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 900 / 520;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat;
+    position: relative !important;
+  }
+
+  .mine-map .player-avatar {
+    width: 38px !important;
+    height: auto !important;
+    transform: translate(-50%, -50%);
+    position: absolute !important;
+  }
+
+  .mine-player-effect {
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    position: absolute;
+  }
+
+  .mine-action-panel {
+    position: fixed;
+    left: 50%;
+    bottom: 60px;
+    transform: translateX(-50%);
+    z-index: 999;
+
+    padding: 10px 14px;
+    border-radius: 10px;
+    display: flex;
+    gap: 10px;
+  }
+
+  .mine-action-panel .action-btn {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .mine-activity-overlay {
+    width: 85%;
+    position: fixed;
+    top: 140px;
+    right: 50%;
+    transform: translateX(50%);
+    padding: 18px;
+    z-index: 140;
+    text-align: center;
+  }
+
+  .mine-activity-overlay h2 {
+    font-size: 18px;
+  }
+
+  .fast-forward-btn {
+    width: 100%;
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .mine-container .controls {
+    position: fixed;
+    flex-direction: row;
+    align-items: center;
+    top: auto;
+    bottom: 5px;
+    right: 50%;
+    transform: translateX(50%);
+  }
+
+  .mine-container .controls button {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+    margin: 2px;
+  }
+}
+
+/* ==========================================
+   DUNGEON PAGE RESPONSIVE (≤768px) - MIRIP MINE
+========================================== */
+@media (max-width: 768px) {
+  .dungeon-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .dungeon-map-wrapper {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 925 / 529;
+    position: relative;
+    transform-origin: top center;
+  }
+
+  .dungeon-map {
+    width: 100% !important;
+    height: 100% !important;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat;
+    position: relative !important;
+    z-index: 1;
+  }
+
+  .dungeon-map .player-avatar {
+    width: 20px !important;
+    height: auto !important;
+    position: absolute !important;
+    transform: translate(-50%, -50%);
+  }
+
+  .dungeon-player-effect {
+    width: 40px;
+    height: 40px;
+    position: absolute;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+  }
+
+  .dungeon-action-panel {
+    position: fixed;
+    left: 50%;
+    bottom: 60px;
+    transform: translateX(-50%);
+    z-index: 999;
+    padding: 10px 14px;
+    border-radius: 10px;
+    display: flex;
+    gap: 10px;
+  }
+
+  .dungeon-action-panel .action-btn {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .activity-overlay {
+    width: 85%;
+    position: fixed;
+    top: 140px;
+    right: 50%;
+    transform: translateX(50%);
+    padding: 18px;
+    z-index: 140;
+    text-align: center;
+  }
+
+  .activity-overlay h2 {
+    font-size: 18px;
+  }
+
+  .fast-forward-btn {
+    width: 100%;
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .dungeon-container .controls {
+    position: fixed;
+    flex-direction: row;
+    align-items: center;
+    top: auto;
+    bottom: 5px;
+    right: 50%;
+    transform: translateX(50%);
+  }
+
+  .dungeon-container .controls button {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+    margin: 2px;
+  }
+}
+
+/* ==========================================
+   HOSPITAL PAGE RESPONSIVE (≤768px)
+========================================== */
+@media (max-width: 768px) {
+  .hospital-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .hospital-map-wrapper {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 736 / 736;
+    overflow: hidden;
+    transform: none !important;
+  }
+
+  .hospital-map {
+    width: 100% !important;
+    height: 100% !important;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat;
+    position: relative !important;
+  }
+
+  .hospital-map .player-avatar {
+    width: 38px !important;
+    height: auto !important;
+    transform: translate(-50%, -50%);
+    position: absolute !important;
+  }
+
+  .hospital-player-effect {
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    position: absolute;
+  }
+
+  .hospital-action-panel {
+    position: fixed;
+    left: 50%;
+    bottom: 60px;
+    transform: translateX(-50%);
+    z-index: 999;
+    padding: 10px 14px;
+    border-radius: 10px;
+    display: flex;
+    gap: 10px;
+  }
+
+  .hospital-action-panel .action-btn {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .activity-overlay {
+    width: 85%;
+    position: fixed;
+    top: 140px;
+    right: 50%;
+    transform: translateX(50%);
+    padding: 18px;
+    z-index: 140;
+    text-align: center;
+  }
+
+  .activity-overlay h2 {
+    font-size: 18px;
+  }
+
+  .fast-forward-btn {
+    width: 100%;
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .hospital-container .controls {
+    position: fixed;
+    flex-direction: row;
+    align-items: center;
+    top: auto;
+    bottom: 5px;
+    right: 50%;
+    transform: translateX(50%);
+  }
+
+  .hospital-container .controls button {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+    margin: 2px;
+  }
+}
+
+/* ==========================================
+   RAMEN PAGE RESPONSIVE (≤768px)
+========================================== */
+@media (max-width: 768px) {
+  .ramen-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .ramen-map {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 720 / 562;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat;
+    position: relative !important;
+    margin: auto;
+  }
+
+  .ramen-map .player-avatar {
+    width: 38px !important;
+    height: auto !important;
+    transform: translate(-50%, -50%);
+    position: absolute !important;
+  }
+
+  .ramen-player-effect {
+    width: 40px;
+    height: 40px;
+    transform: translate(-50%, -50%);
+    position: absolute;
+  }
+
+  .ramen-action-panel {
+    position: fixed;
+    left: 50%;
+    bottom: 60px;
+    transform: translateX(-50%);
+    z-index: 999;
+    padding: 10px 14px;
+    border-radius: 10px;
+    display: flex;
+    gap: 10px;
+  }
+
+  .ramen-action-panel .action-btn {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .activity-overlay {
+    width: 85%;
+    position: fixed;
+    top: 140px;
+    right: 50%;
+    transform: translateX(50%);
+    padding: 18px;
+    z-index: 140;
+    text-align: center;
+  }
+
+  .activity-overlay h2 {
+    font-size: 18px;
+  }
+
+  .fast-forward-btn {
+    width: 100%;
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .ramen-container .controls {
+    position: fixed;
+    flex-direction: row;
+    align-items: center;
+    top: auto;
+    bottom: 5px;
+    right: 50%;
+    transform: translateX(50%);
+    z-index: 999;
+  }
+
+  .ramen-container .controls button {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+    margin: 2px;
   }
 }

@@ -10,36 +10,49 @@ export default function Home({
 }) {
   const [player, setPlayer] = useState({ x: 188, y: 448 });
 
-  const movementRef = useRef(null);
+  const mapRef = useRef(null);
+  const containerRef = useRef(null);
+
   const activityTimerRef = useRef(null);
   const moveInterval = useRef(null);
   const lastDir = useRef(null);
 
   const [dir, setDir] = useState("idle");
-
   const [activity, setActivity] = useState(null);
 
   const [actionPanel, setActionPanel] = useState({
     visible: false,
-    x: 0,
-    y: 0,
     actions: [],
   });
 
   const [effectType, setEffectType] = useState(null);
+  const currentPerTickEffectRef = useRef(null);
+
+  const MAP_W = 736;
+  const MAP_H = 552;
+
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    function updateScale() {
+      if (!containerRef.current) return;
+      const containerWidth = containerRef.current.offsetWidth;
+
+      const newScale = containerWidth / MAP_W;
+      setScale(newScale);
+    }
+
+    updateScale();
+    window.addEventListener("resize", updateScale);
+
+    return () => window.removeEventListener("resize", updateScale);
+  }, []);
 
   function perTickEffectMultiple(ticks) {
     if (!currentPerTickEffectRef.current) return;
-    for (let i = 0; i < ticks; i++) {
-      currentPerTickEffectRef.current();
-    }
+    for (let i = 0; i < ticks; i++) currentPerTickEffectRef.current();
   }
 
-  const currentPerTickEffectRef = useRef(null);
-
-  // =====================
-  //   ACTIVITY SYSTEM
-  // =====================
   function startActivity(name, duration, perTickEffect) {
     setActivity({ name, total: duration, remaining: duration });
 
@@ -47,7 +60,6 @@ export default function Home({
 
     currentPerTickEffectRef.current = perTickEffect;
 
-    // Set effect based on activity
     if (name === "Bathing") setEffectType("bath-effect");
     else if (name === "Sleeping") setEffectType("sleep-effect");
     else if (name === "Eating") setEffectType("eat-effect");
@@ -58,13 +70,12 @@ export default function Home({
         if (!a) return null;
 
         const left = a.remaining - 1;
-
-        perTickEffect(); // jalankan efek per detik
+        perTickEffect();
 
         if (left <= 0) {
           clearInterval(activityTimerRef.current);
           currentPerTickEffectRef.current = null;
-          setEffectType(null); // hilangkan efek
+          setEffectType(null);
           showMessage(`${name} finished!`);
           return null;
         }
@@ -74,9 +85,6 @@ export default function Home({
     }, 1000);
   }
 
-  // =========================================================
-  //               INTERACTION ZONES
-  // =========================================================
   const areas = [
     {
       id: "bath",
@@ -90,7 +98,7 @@ export default function Home({
           setState((s) => ({
             ...s,
             hygiene: Math.min(100, s.hygiene + 5),
-            happy: Math.min(100, s.happy + 0.5),
+            happy: s.happy + 0.5,
           }))
         ),
     },
@@ -106,9 +114,9 @@ export default function Home({
         startActivity("Sleeping", 10, () =>
           setState((s) => ({
             ...s,
-            sleep: Math.min(100, s.sleep + 4),
-            happy: Math.min(100, s.happy + 0.8),
-            hygiene: Math.min(100, s.hygiene + 1),
+            sleep: s.sleep + 4,
+            happy: s.happy + 0.8,
+            hygiene: s.hygiene - 1,
           }))
         ),
     },
@@ -122,11 +130,7 @@ export default function Home({
       h: 133,
       action: () =>
         startActivity("Eating", 6, () =>
-          setState((s) => ({
-            ...s,
-            meal: Math.min(100, s.meal + 6),
-            happy: Math.min(100, s.happy + 1),
-          }))
+          setState((s) => ({ ...s, meal: s.meal + 6, happy: s.happy + 1 }))
         ),
     },
 
@@ -139,10 +143,7 @@ export default function Home({
       h: 142,
       action: () =>
         startActivity("Relaxing", 5, () =>
-          setState((s) => ({
-            ...s,
-            happy: Math.min(100, s.happy + 4),
-          }))
+          setState((s) => ({ ...s, happy: s.happy + 4 }))
         ),
     },
 
@@ -157,74 +158,49 @@ export default function Home({
     },
   ];
 
-  // =========================================================
-  //            INTERSECT CHECK
-  // =========================================================
-  function isOverlap(a, b) {
-    return !(
-      a.right < b.left ||
-      a.left > b.right ||
-      a.bottom < b.top ||
-      a.top > b.bottom
-    );
-  }
-
-  // =========================================================
-  //            MOVEMENT SYSTEM
-  // =========================================================
   function move(dir) {
     const speed = 20;
 
     setPlayer((prev) => {
-      let x = prev.x;
-      let y = prev.y;
+      let { x, y } = prev;
 
-      let dx = 0,
-        dy = 0;
+      if (dir === "up") y -= speed;
+      if (dir === "down") y += speed;
+      if (dir === "left") x -= speed;
+      if (dir === "right") x += speed;
 
-      if (dir === "up") dy = -speed;
-      if (dir === "down") dy = speed;
-      if (dir === "left") dx = -speed;
-      if (dir === "right") dx = speed;
+      x = Math.max(0, Math.min(MAP_W - 40, x));
+      y = Math.max(0, Math.min(MAP_H - 60, y));
 
-      x += dx;
-      y += dy;
+      setDir(
+        dir === "up"
+          ? "back"
+          : dir === "down"
+          ? "idle"
+          : dir === "right"
+          ? "right"
+          : "left"
+      );
 
-      x = Math.max(0, Math.min(736 - 40, x));
-      y = Math.max(0, Math.min(552 - 60, y));
-
-      if (dy < 0) setDir("back");
-      else if (dy > 0) setDir("idle");
-      else if (dx > 0) setDir("right");
-      else if (dx < 0) setDir("left");
-
-      return { ...prev, x, y };
+      return { x, y };
     });
   }
 
-  function startHold(dir) {
-    lastDir.current = dir;
-    move(dir);
-
+  function startHold(d) {
+    lastDir.current = d;
+    move(d);
     if (moveInterval.current) clearInterval(moveInterval.current);
-
-    moveInterval.current = setInterval(() => {
-      move(lastDir.current);
-    }, 120);
+    moveInterval.current = setInterval(() => move(d), 120);
   }
 
   function stopHold() {
-    lastDir.current = null;
-    if (moveInterval.current) {
-      clearInterval(moveInterval.current);
-      moveInterval.current = null;
-    }
+    if (moveInterval.current) clearInterval(moveInterval.current);
+    moveInterval.current = null;
   }
 
   function onKeyDown(e) {
-    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key))
       e.preventDefault();
-    }
     if (e.repeat) return;
 
     if (e.key === "ArrowUp") startHold("up");
@@ -232,14 +208,12 @@ export default function Home({
     if (e.key === "ArrowLeft") startHold("left");
     if (e.key === "ArrowRight") startHold("right");
   }
-
   function onKeyUp() {
     stopHold();
   }
 
   useEffect(() => {
     if (!keyboardEnabled) return;
-
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
 
@@ -249,9 +223,15 @@ export default function Home({
     };
   }, [keyboardEnabled]);
 
-  // =========================================================
-  //        DETECT WHICH ZONE PLAYER IS IN
-  // =========================================================
+  function isOverlap(a, b) {
+    return !(
+      a.right < b.left ||
+      a.left > b.right ||
+      a.bottom < b.top ||
+      a.top > b.bottom
+    );
+  }
+
   useEffect(() => {
     const pRect = {
       left: player.x,
@@ -259,6 +239,7 @@ export default function Home({
       right: player.x + 40,
       bottom: player.y + 60,
     };
+
     let inside = null;
 
     for (const a of areas) {
@@ -268,7 +249,6 @@ export default function Home({
         right: a.x + a.w,
         bottom: a.y + a.h,
       };
-
       if (isOverlap(pRect, aRect)) inside = a;
     }
 
@@ -279,8 +259,6 @@ export default function Home({
 
     setActionPanel({
       visible: true,
-      x: player.x + 50,
-      y: player.y - 10,
       actions: [
         {
           label: inside.id === "exit" ? "Exit Home 🚪" : `Use ${inside.label}`,
@@ -290,9 +268,6 @@ export default function Home({
     });
   }, [player]);
 
-  // =========================================================
-  //              FLOATING MESSAGE SYSTEM
-  // =========================================================
   function showMessage(text) {
     const msg = document.createElement("div");
     msg.className = "random-event-msg";
@@ -301,46 +276,44 @@ export default function Home({
     setTimeout(() => msg.remove(), 3000);
   }
 
-  // =========================================================
-  //                      RENDER
-  // =========================================================
   return (
-    <div className="home-container">
+    <div className="home-container" ref={containerRef}>
       <div
-        className="home-map"
+        className="home-map-wrapper"
         style={{
-          width: 736,
-          height: 552,
-          backgroundImage: `url(${homeBg})`,
-          backgroundSize: "cover",
-          position: "relative",
-          margin: "auto",
+          width: MAP_W,
+          height: MAP_H,
+          transform: `scale(${scale})`,
+          transformOrigin: "top center",
         }}
       >
-        {/* PLAYER SPRITE */}
-        <img
-          src={
-            dir === "left"
-              ? selectedAvatar.left
-              : dir === "right"
-              ? selectedAvatar.right
-              : dir === "back"
-              ? selectedAvatar.back
-              : selectedAvatar.idle
-          }
-          className="player-avatar"
+        <div
+          className="home-map"
+          ref={mapRef}
           style={{
-            position: "absolute",
-            left: player.x,
-            top: player.y,
-            width: 40,
-            height: 60,
+            backgroundImage: `url(${homeBg})`,
           }}
-        />
+        >
+          <img
+            src={
+              dir === "left"
+                ? selectedAvatar.left
+                : dir === "right"
+                ? selectedAvatar.right
+                : dir === "back"
+                ? selectedAvatar.back
+                : selectedAvatar.idle
+            }
+            className="player-avatar"
+            style={{
+              left: player.x,
+              top: player.y,
+            }}
+          />
+        </div>
       </div>
 
-      {/* MOVEMENT CONTROLS */}
-      <div className="controls" style={{ textAlign: "center", marginTop: 10 }}>
+      <div className="controls">
         <button onMouseDown={() => startHold("up")} onMouseUp={stopHold}>
           ▲
         </button>
@@ -358,29 +331,28 @@ export default function Home({
         </div>
       </div>
 
-      {/* ACTIVITY EFFECT ON PLAYER */}
       {effectType && (
         <div
           className={`player-effect ${effectType}`}
-          style={{ left: player.x, top: player.y }}
+          style={{
+            left: player.x * scale,
+            top: player.y * scale,
+          }}
         ></div>
       )}
 
-      {/* ACTIVITY OVERLAY */}
       {activity && (
         <div className="box activity-overlay">
           <h2>{activity.name}</h2>
           <div>
             {activity.remaining} / {activity.total}
           </div>
+
           <button
             className="fast-forward-btn"
             onClick={() => {
               clearInterval(activityTimerRef.current);
-
-              const ticksRemaining = activity.remaining;
-              perTickEffectMultiple(ticksRemaining);
-
+              perTickEffectMultiple(activity.remaining);
               setActivity(null);
               setEffectType(null);
               showMessage(`${activity.name} completed instantly!`);
@@ -392,7 +364,7 @@ export default function Home({
       )}
 
       {actionPanel.visible && (
-        <div className="home-action-panel box">
+        <div className="home-action-panel">
           {actionPanel.actions.map((a, i) => (
             <button key={i} className="action-btn" onClick={a.exec}>
               {a.label}

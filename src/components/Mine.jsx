@@ -10,34 +10,47 @@ export default function Mine({
 }) {
   const [player, setPlayer] = useState({ x: 522, y: 263 });
 
-  function preloadImages(srcArray) {
-    srcArray.forEach((src) => {
-      const img = new Image();
-      img.src = src;
-    });
-  }
+  const mapRef = useRef(null);
+  const containerRef = useRef(null);
 
-  const movementRef = useRef(null);
   const activityTimerRef = useRef(null);
   const moveInterval = useRef(null);
   const lastDir = useRef(null);
 
   const [dir, setDir] = useState("idle");
   const [activity, setActivity] = useState(null);
+
   const [actionPanel, setActionPanel] = useState({
     visible: false,
-    x: 0,
-    y: 0,
     actions: [],
   });
+
   const [effectType, setEffectType] = useState(null);
   const currentPerTickEffectRef = useRef(null);
 
+  const MAP_W = 900;
+  const MAP_H = 520;
+
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    function updateScale() {
+      if (!containerRef.current) return;
+
+      const containerWidth = containerRef.current.offsetWidth;
+      const newScale = containerWidth / MAP_W;
+
+      setScale(newScale);
+    }
+
+    updateScale();
+    window.addEventListener("resize", updateScale);
+    return () => window.removeEventListener("resize", updateScale);
+  }, []);
+
   function perTickEffectMultiple(ticks) {
     if (!currentPerTickEffectRef.current) return;
-    for (let i = 0; i < ticks; i++) {
-      currentPerTickEffectRef.current();
-    }
+    for (let i = 0; i < ticks; i++) currentPerTickEffectRef.current();
   }
 
   function startActivity(name, duration, perTickEffect) {
@@ -55,15 +68,18 @@ export default function Mine({
     activityTimerRef.current = setInterval(() => {
       setActivity((a) => {
         if (!a) return null;
+
         const left = a.remaining - 1;
         perTickEffect();
+
         if (left <= 0) {
           clearInterval(activityTimerRef.current);
+          showMessage(`${name} finished!`);
           currentPerTickEffectRef.current = null;
           setEffectType(null);
-          showMessage(`${name} finished!`);
           return null;
         }
+
         return { ...a, remaining: left };
       });
     }, 1000);
@@ -93,7 +109,7 @@ export default function Mine({
       y: 1,
       w: 182,
       h: 111,
-      action: () => {
+      action: () =>
         setState((s) => {
           if (s.ore <= 0) {
             showMessage("You have no ore to sell!");
@@ -118,8 +134,7 @@ export default function Mine({
           );
 
           return s;
-        });
-      },
+        }),
     },
     {
       id: "mine",
@@ -133,12 +148,13 @@ export default function Mine({
           setState((s) => {
             const inv = { ...s.inventory };
             inv.ore = (inv.ore || 0) + 1;
+
             return {
               ...s,
               ore: s.ore + 1,
               inventory: inv,
-              hygiene: Math.min(100, s.hygiene - 2),
-              happy: Math.min(100, s.happy - 3),
+              hygiene: s.hygiene - 2,
+              happy: s.happy - 3,
             };
           })
         ),
@@ -182,55 +198,48 @@ export default function Mine({
 
   function move(dir) {
     const speed = 20;
+
     setPlayer((prev) => {
-      let x = prev.x,
-        y = prev.y,
-        dx = 0,
-        dy = 0;
+      let x = prev.x;
+      let y = prev.y;
 
-      if (dir === "up") dy = -speed;
-      if (dir === "down") dy = speed;
-      if (dir === "left") dx = -speed;
-      if (dir === "right") dx = speed;
+      if (dir === "up") y -= speed;
+      if (dir === "down") y += speed;
+      if (dir === "left") x -= speed;
+      if (dir === "right") x += speed;
 
-      x += dx;
-      y += dy;
+      x = Math.max(0, Math.min(MAP_W - 40, x));
+      y = Math.max(0, Math.min(MAP_H - 60, y));
 
-      x = Math.max(0, Math.min(900 - 40, x));
-      y = Math.max(0, Math.min(520 - 60, y));
+      setDir(
+        dir === "up"
+          ? "back"
+          : dir === "down"
+          ? "idle"
+          : dir === "right"
+          ? "right"
+          : "left"
+      );
 
-      if (dy < 0) setDir("back");
-      else if (dy > 0) setDir("idle");
-      else if (dx > 0) setDir("right");
-      else if (dx < 0) setDir("left");
-
-      return { ...prev, x, y };
+      return { x, y };
     });
   }
 
   function startHold(dir) {
     lastDir.current = dir;
     move(dir);
-
     if (moveInterval.current) clearInterval(moveInterval.current);
-
-    moveInterval.current = setInterval(() => {
-      move(lastDir.current);
-    }, 120);
+    moveInterval.current = setInterval(() => move(dir), 120);
   }
 
   function stopHold() {
-    lastDir.current = null;
-    if (moveInterval.current) {
-      clearInterval(moveInterval.current);
-      moveInterval.current = null;
-    }
+    if (moveInterval.current) clearInterval(moveInterval.current);
+    moveInterval.current = null;
   }
 
   function onKeyDown(e) {
-    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
+    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key))
       e.preventDefault();
-    }
     if (e.repeat) return;
 
     if (e.key === "ArrowUp") startHold("up");
@@ -262,16 +271,17 @@ export default function Mine({
       right: player.x + 40,
       bottom: player.y + 60,
     };
+
     let inside = null;
 
     for (const a of areas) {
-      const aRect = {
+      const rect = {
         left: a.x,
         top: a.y,
         right: a.x + a.w,
         bottom: a.y + a.h,
       };
-      if (isOverlap(pRect, aRect)) inside = a;
+      if (isOverlap(pRect, rect)) inside = a;
     }
 
     if (!inside) {
@@ -281,11 +291,9 @@ export default function Mine({
 
     setActionPanel({
       visible: true,
-      x: player.x + 50,
-      y: player.y - 10,
       actions: [
         {
-          label: inside.id === "exit" ? "Exit Mine 🚪" : `${inside.label}`,
+          label: inside.id === "exit" ? "Exit Mine 🚪" : inside.label,
           exec: inside.action,
         },
       ],
@@ -301,51 +309,75 @@ export default function Mine({
   }
 
   return (
-    <div className="mine-container">
+    <div className="mine-container" ref={containerRef}>
       <div
-        className="mine-map"
+        className="mine-map-wrapper"
         style={{
-          width: 900,
-          height: 520,
-          backgroundImage: `url(${mineBg})`,
-          backgroundSize: "cover",
-          position: "relative",
-          margin: "auto",
+          width: MAP_W,
+          height: MAP_H,
+          transform: `scale(${scale})`,
+          transformOrigin: "top center",
         }}
       >
-        <img
-          src={
-            dir === "left"
-              ? selectedAvatar.left
-              : dir === "right"
-              ? selectedAvatar.right
-              : dir === "back"
-              ? selectedAvatar.back
-              : selectedAvatar.idle
-          }
-          className="player-avatar"
+        <div
+          className="mine-map"
+          ref={mapRef}
           style={{
-            position: "absolute",
-            left: player.x,
-            top: player.y,
-            width: 40,
-            height: 60,
+            width: MAP_W,
+            height: MAP_H,
+            backgroundImage: `url(${mineBg})`,
           }}
-        />
+        >
+          <img
+            src={
+              dir === "left"
+                ? selectedAvatar.left
+                : dir === "right"
+                ? selectedAvatar.right
+                : dir === "back"
+                ? selectedAvatar.back
+                : selectedAvatar.idle
+            }
+            className="player-avatar"
+            style={{
+              left: player.x,
+              top: player.y,
+            }}
+          />
+        </div>
       </div>
 
-      <div className="controls" style={{ textAlign: "center", marginTop: 10 }}>
-        <button onMouseDown={() => startHold("up")} onMouseUp={stopHold}>
+      <div className="controls">
+        <button
+          className="mine-controls-button"
+          onMouseDown={() => startHold("up")}
+          onMouseUp={stopHold}
+        >
           ▲
         </button>
-        <div>
-          <button onMouseDown={() => startHold("left")} onMouseUp={stopHold}>
+
+        <div className="controls-row">
+          <button
+            className="mine-controls-button"
+            onMouseDown={() => startHold("left")}
+            onMouseUp={stopHold}
+          >
             ◀
           </button>
-          <button onMouseDown={() => startHold("down")} onMouseUp={stopHold}>
+
+          <button
+            className="mine-controls-button"
+            onMouseDown={() => startHold("down")}
+            onMouseUp={stopHold}
+          >
             ▼
           </button>
-          <button onMouseDown={() => startHold("right")} onMouseUp={stopHold}>
+
+          <button
+            className="mine-controls-button"
+            onMouseDown={() => startHold("right")}
+            onMouseUp={stopHold}
+          >
             ▶
           </button>
         </div>
@@ -354,12 +386,15 @@ export default function Mine({
       {effectType && (
         <div
           className={`mine-player-effect ${effectType}`}
-          style={{ left: player.x, top: player.y }}
+          style={{
+            left: player.x * scale,
+            top: player.y * scale,
+          }}
         ></div>
       )}
 
       {activity && (
-        <div className="box activity-overlay">
+        <div className="box mine-activity-overlay">
           <h2>{activity.name}</h2>
           <div>
             {activity.remaining} / {activity.total}
@@ -368,8 +403,7 @@ export default function Mine({
             className="fast-forward-btn"
             onClick={() => {
               clearInterval(activityTimerRef.current);
-              const ticksRemaining = activity.remaining;
-              perTickEffectMultiple(ticksRemaining);
+              perTickEffectMultiple(activity.remaining);
               setActivity(null);
               setEffectType(null);
               showMessage(`${activity.name} completed instantly!`);
@@ -381,7 +415,7 @@ export default function Mine({
       )}
 
       {actionPanel.visible && (
-        <div className="mine-action-panel box">
+        <div className="mine-action-panel">
           {actionPanel.actions.map((a, i) => (
             <button key={i} className="action-btn" onClick={a.exec}>
               {a.label}

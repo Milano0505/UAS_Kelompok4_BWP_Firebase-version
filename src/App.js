@@ -78,6 +78,17 @@ function clamp(v) {
   return Math.max(0, Math.min(100, v));
 }
 
+function pxToPercent(leftPx, topPx) {
+  const map = document.getElementById("map");
+  if (!map) return { leftPercent: 0, topPercent: 0 };
+
+  const rect = map.getBoundingClientRect();
+  return {
+    leftPercent: (leftPx / rect.width) * 100,
+    topPercent: (topPx / rect.height) * 100,
+  };
+}
+
 function Header({
   timeText,
   greeting,
@@ -233,7 +244,10 @@ function Map({
           key={l.id}
           id={l.id}
           className="loc"
-          style={{ left: l.left, top: l.top }}
+          style={{
+            left: `${l.leftPercent}%`,
+            top: `${l.topPercent}%`,
+          }}
         >
           <div className="koko">
             <img src={l.img} alt={l.label} />
@@ -246,8 +260,8 @@ function Map({
         id="player"
         className="player"
         style={{
-          left: playerPos.left + "px",
-          top: playerPos.top + "px",
+          left: `${playerPos.leftPercent}%`,
+          top: `${playerPos.topPercent}%`,
         }}
       >
         <img
@@ -259,18 +273,28 @@ function Map({
         <div className="player-name">{playerPos.name}</div>
       </div>
 
-      {droppedItems.map((it, i) => (
-        <div
-          key={i}
-          className="dropped-item"
-          style={{ left: it.x + "px", top: it.y + "px" }}
-          onMouseEnter={() => {
-            if (typeof onPickupDropped === "function") onPickupDropped(i);
-          }}
-        >
-          {it.icon || "🎁"}
-        </div>
-      ))}
+      {droppedItems.map((it, i) => {
+        const map = mapRef.current;
+        const mapWidth = map ? map.getBoundingClientRect().width : 900;
+        const size = it.sizeRatio ? mapWidth * it.sizeRatio : 32;
+
+        return (
+          <div
+            key={i}
+            className="dropped-item"
+            style={{
+              left: `${it.xPercent}%`,
+              top: `${it.yPercent}%`,
+              width: `${size}px`,
+              height: `${size}px`,
+              fontSize: `${size}px`,
+            }}
+            onMouseEnter={() => onPickupDropped?.(i)}
+          >
+            {it.icon || "🎁"}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -393,7 +417,6 @@ export default function App() {
     setUser(null);
   }
 
-  // UI visibility
   const [started, setStarted] = useState(false);
   const [showInventory, setShowInventory] = useState(false);
   const [actionPanelState, setActionPanelState] = useState({
@@ -404,14 +427,28 @@ export default function App() {
   });
   const [gameOver, setGameOver] = useState({ visible: false, reason: "" });
 
-  // Game state
   const [state, setState] = useState(DEFAULT_STATE);
   const [playerPos, setPlayerPos] = useState({
     left: 290,
     top: 420,
+    leftPercent: 32,
+    topPercent: 82,
     sprite: char1Idle,
     name: "Player",
   });
+
+  useEffect(() => {
+    const map = document.getElementById("map");
+    if (!map) return;
+
+    const rect = map.getBoundingClientRect();
+    setPlayerPos((p) => ({
+      ...p,
+      left: (p.leftPercent / 100) * rect.width,
+      top: (p.topPercent / 100) * rect.height,
+    }));
+  }, []);
+
   const [selectedAvatar, setSelectedAvatar] = useState({
     name: "Hero",
     idle: char1Idle,
@@ -424,19 +461,16 @@ export default function App() {
 
   const [mode, setMode] = useState("outdoor");
 
-  // dropped items on map
   const [droppedItems, setDroppedItems] = useState([]);
 
   const [keyboardEnabled, setKeyboardEnabled] = useState(true);
 
-  // time/tick
   const [gameMinutes, setGameMinutes] = useState(0);
   const [greeting, setGreeting] = useState("Good morning");
   const lastMoveRef = useRef(Date.now());
   const tickRef = useRef(null);
   const timeRef = useRef(null);
 
-  // avatars list
   const avatars = [
     {
       name: "Hero",
@@ -574,23 +608,42 @@ export default function App() {
     ]);
   }, []);
 
-  // locs list
   const locs = [
-    { id: "home", label: "Home", img: homeImg, left: 100, top: 70 },
+    {
+      id: "home",
+      label: "Home",
+      img: homeImg,
+      left: 100,
+      top: 70,
+      leftPercent: 11,
+      topPercent: 13,
+    },
     {
       id: "dungeon",
       label: "The Dungeon",
       img: dungeonImg,
       left: 590,
       top: 10,
+      leftPercent: 65,
+      topPercent: 2,
     },
-    { id: "mine", label: "The Mine", img: mineImg, left: 740, top: 250 },
+    {
+      id: "mine",
+      label: "The Mine",
+      img: mineImg,
+      left: 740,
+      top: 250,
+      leftPercent: 82,
+      topPercent: 46,
+    },
     {
       id: "ramen",
       label: "The Ramen Shop",
       img: ramenImg,
       left: 210,
       top: 200,
+      leftPercent: 23,
+      topPercent: 38,
     },
     {
       id: "hospital",
@@ -598,6 +651,8 @@ export default function App() {
       img: hospitalImg,
       left: 620,
       top: 360,
+      leftPercent: 69,
+      topPercent: 68,
     },
   ];
 
@@ -765,11 +820,11 @@ export default function App() {
   function spawnRandomItem() {
     setDroppedItems((prev) => {
       if (prev.length >= 5) return prev;
-      const mapW = 900,
-        mapH = 520;
-      const x = Math.floor(Math.random() * (mapW - 40));
-      const y = Math.floor(Math.random() * (mapH - 40));
-      return [...prev, { x, y, icon: "🎁" }];
+
+      const xPercent = Math.random() * 100;
+      const yPercent = Math.random() * 100;
+
+      return [...prev, { xPercent, yPercent, icon: "🎁", sizeRatio: 0.05 }];
     });
   }
 
@@ -816,11 +871,14 @@ export default function App() {
       const pRect = { left, top, right: left + 32, bottom: top + 48 };
       let found = null;
       for (const loc of locs) {
+        const locLeft = (loc.leftPercent / 100) * rect.width;
+        const locTop = (loc.topPercent / 100) * rect.height;
+
         const locRect = {
-          left: loc.left,
-          top: loc.top,
-          right: loc.left + 80,
-          bottom: loc.top + 80,
+          left: locLeft,
+          top: locTop,
+          right: locLeft + 80 * (rect.width / 900),
+          bottom: locTop + 80 * (rect.height / 520),
         };
 
         const overlap = !(
@@ -853,12 +911,16 @@ export default function App() {
       let removed = false;
       setDroppedItems((prev) =>
         prev.filter((it) => {
+          const itemLeft = (it.xPercent / 100) * rect.width;
+          const itemTop = (it.yPercent / 100) * rect.height;
+
           const r = {
-            left: it.x,
-            top: it.y,
-            right: it.x + 24,
-            bottom: it.y + 24,
+            left: itemLeft,
+            top: itemTop,
+            right: itemLeft + 24 * (rect.width / 900),
+            bottom: itemTop + 24 * (rect.height / 520),
           };
+
           const overlap = !(
             pRect.right < r.left ||
             pRect.left > r.right ||
@@ -874,7 +936,17 @@ export default function App() {
         })
       );
 
-      return { ...prevPos, left, top, sprite };
+      const leftPercent = (left / rect.width) * 100;
+      const topPercent = (top / rect.height) * 100;
+
+      return {
+        ...prevPos,
+        left,
+        top,
+        leftPercent,
+        topPercent,
+        sprite,
+      };
     });
   }
 
@@ -1047,21 +1119,12 @@ export default function App() {
   }, [keyboardEnabled]);
 
   function calculateLifeScore(state) {
-    // 1. Stat Balance (perfect 100 = max)
     const statScore = state.meal + state.sleep + state.hygiene + state.happy;
-
-    // 2. Activities
     const activityScore = state.activitiesDone * 10;
-
-    // 3. Items collected and used
     const itemScore =
-      state.itemsCollected * 2 + // collected
-      state.itemsUsed * 5; // used
-
-    // 4. Variety of visited areas
+      state.itemsCollected * 2 +
+      state.itemsUsed * 5;
     const areaScore = state.visitedAreas.length * 20;
-
-    // Total
     return {
       statScore,
       activityScore,
@@ -1072,22 +1135,22 @@ export default function App() {
   }
 
   function restartGame() {
-    // Reset stats
     setState(DEFAULT_STATE);
 
-    // Reset waktu
     setGameMinutes(0);
     setGreeting("Good morning 🌅");
 
-    // Reset posisi player
     setPlayerPos({
       left: 290,
       top: 420,
       sprite: selectedAvatarRef.current.idle,
       name: playerPos.name || "Player",
+      leftPercent: 32,
+      topPercent: 82,
     });
 
-    // Reset UI
+    setDroppedItems([]);
+
     setMode("outdoor");
     setGameOver({ visible: false, reason: "" });
     setKeyboardEnabled(true);
@@ -1125,6 +1188,27 @@ export default function App() {
 
     return () => clearTimeout(handler);
   }, [playerPos, selectedAvatar, mode, state, gameMinutes, user]);
+
+  const getSafePosition = (pxX, pxY, currentPos) => {
+    const pos = pxToPercent(pxX, pxY);
+    return {
+      leftPercent: Number(pos?.leftPercent) || currentPos.leftPercent,
+      topPercent: Number(pos?.topPercent) || currentPos.topPercent,
+    };
+  };
+
+  const safeExitToOutdoor = (pxX, pxY) => {
+    const { leftPercent, topPercent } = getSafePosition(pxX, pxY, playerPos);
+
+    setMode("outdoor");
+    setKeyboardEnabled(true);
+
+    setPlayerPos((prev) => ({
+      ...prev,
+      leftPercent,
+      topPercent,
+    }));
+  };
 
   return (
     <div className="app-root">
@@ -1181,11 +1265,7 @@ export default function App() {
 
           {mode === "home" && (
             <Home
-              onExitHome={() => {
-                setMode("outdoor");
-                setKeyboardEnabled(true);
-                setPlayerPos((p) => ({ ...p, left: 100, top: 360 }));
-              }}
+              onExitHome={() => safeExitToOutdoor(100, 360)}
               state={state}
               setState={setState}
               selectedAvatar={selectedAvatar}
@@ -1195,11 +1275,7 @@ export default function App() {
 
           {mode === "mine" && (
             <Mine
-              onExitMine={() => {
-                setMode("outdoor");
-                setKeyboardEnabled(true);
-                setPlayerPos((p) => ({ ...p, left: 740, top: 250 }));
-              }}
+              onExitMine={() => safeExitToOutdoor(740, 250)}
               state={state}
               setState={setState}
               selectedAvatar={selectedAvatar}
@@ -1209,11 +1285,7 @@ export default function App() {
 
           {mode === "dungeon" && (
             <Dungeon
-              onExitDungeon={() => {
-                setMode("outdoor");
-                setKeyboardEnabled(true);
-                setPlayerPos((p) => ({ ...p, left: 590, top: 10 }));
-              }}
+              onExitDungeon={() => safeExitToOutdoor(590, 10)}
               state={state}
               setState={setState}
               selectedAvatar={selectedAvatar}
@@ -1223,11 +1295,7 @@ export default function App() {
 
           {mode === "ramen" && (
             <Ramen
-              onExitRamen={() => {
-                setMode("outdoor");
-                setKeyboardEnabled(true);
-                setPlayerPos((p) => ({ ...p, left: 210, top: 200 }));
-              }}
+              onExitRamen={() => safeExitToOutdoor(210, 200)}
               state={state}
               setState={setState}
               selectedAvatar={selectedAvatar}
@@ -1237,11 +1305,7 @@ export default function App() {
 
           {mode === "hospital" && (
             <Hospital
-              onExitHospital={() => {
-                setMode("outdoor");
-                setKeyboardEnabled(true);
-                setPlayerPos((p) => ({ ...p, left: 620, top: 360 }));
-              }}
+              onExitHospital={() => safeExitToOutdoor(620, 360)}
               state={state}
               setState={setState}
               selectedAvatar={selectedAvatar}
