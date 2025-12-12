@@ -101,7 +101,6 @@ function Header({
   return (
     <header className="header">
       <div className="left">
-        {/* Tombol login/logout */}
         {user ? (
           <button id="auth-btn" onClick={onLogoutClick}>
             Logout
@@ -342,6 +341,37 @@ function Controls({ startHold, stopHold }) {
       </div>
     </div>
   );
+}
+
+export function getActivitiesList(mode) {
+  switch (mode) {
+    case "outdoor":
+      return [
+        "Enter Home",
+        "Enter Dungeon",
+        "Enter Mine",
+        "Enter Hospital",
+        "Enter Ramen Shop",
+      ];
+
+    case "home":
+      return ["Use Bath", "Sleep", "Eat Meal", "Relax"];
+
+    case "mine":
+      return ["Clean Tools", "Mine Ores", "Sell Ores", "Rest"];
+
+    case "dungeon":
+      return ["Fight Monsters", "Loot Items", "Explore"];
+
+    case "ramen":
+      return ["Eat Ramen", "Chat With Owner", "Part-Time Work"];
+
+    case "hospital":
+      return ["Checkup", "Donate Blood", "Rest"];
+
+    default:
+      return [];
+  }
 }
 
 function ActionPanel({ visible, title, desc, actions }) {
@@ -1118,12 +1148,23 @@ export default function App() {
     };
   }, [keyboardEnabled]);
 
+  const [showActivitiesPanel, setShowActivitiesPanel] = useState(false);
+  const [activitiesList, setActivitiesList] = useState([]);
+
+  function openActivitiesPanel(mode) {
+    const list = getActivitiesList(mode);
+    setActivitiesList(list);
+    setShowActivitiesPanel(true);
+  }
+
+  function closeActivitiesPanel() {
+    setShowActivitiesPanel(false);
+  }
+
   function calculateLifeScore(state) {
     const statScore = state.meal + state.sleep + state.hygiene + state.happy;
     const activityScore = state.activitiesDone * 10;
-    const itemScore =
-      state.itemsCollected * 2 +
-      state.itemsUsed * 5;
+    const itemScore = state.itemsCollected * 2 + state.itemsUsed * 5;
     const areaScore = state.visitedAreas.length * 20;
     return {
       statScore,
@@ -1254,6 +1295,12 @@ export default function App() {
                 onPickupDropped={pickupDropped}
               />
               <Controls startHold={startHold} stopHold={stopHold} />
+              <button
+                className="activities-btn"
+                onClick={() => openActivitiesPanel("outdoor")}
+              >
+                Activities List
+              </button>
               <ActionPanel
                 visible={actionPanelState.visible}
                 title={actionPanelState.title}
@@ -1263,6 +1310,24 @@ export default function App() {
             </>
           )}
 
+          {showActivitiesPanel && (
+            <div className="overlay">
+              <div className="box">
+                <h1>Activities List</h1>
+
+                <ul className="activities-ul">
+                  {activitiesList.map((item, idx) => (
+                    <li key={idx}>{item}</li>
+                  ))}
+                </ul>
+
+                <button className="close-btn" onClick={closeActivitiesPanel}>
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
+
           {mode === "home" && (
             <Home
               onExitHome={() => safeExitToOutdoor(100, 360)}
@@ -1270,6 +1335,7 @@ export default function App() {
               setState={setState}
               selectedAvatar={selectedAvatar}
               keyboardEnabled={keyboardEnabled}
+              openActivitiesPanel={openActivitiesPanel}
             />
           )}
 
@@ -1280,6 +1346,7 @@ export default function App() {
               setState={setState}
               selectedAvatar={selectedAvatar}
               keyboardEnabled={keyboardEnabled}
+              openActivitiesPanel={openActivitiesPanel}
             />
           )}
 
@@ -1290,6 +1357,7 @@ export default function App() {
               setState={setState}
               selectedAvatar={selectedAvatar}
               keyboardEnabled={keyboardEnabled}
+              openActivitiesPanel={openActivitiesPanel}
             />
           )}
 
@@ -1300,6 +1368,7 @@ export default function App() {
               setState={setState}
               selectedAvatar={selectedAvatar}
               keyboardEnabled={keyboardEnabled}
+              openActivitiesPanel={openActivitiesPanel}
             />
           )}
 
@@ -1310,6 +1379,7 @@ export default function App() {
               setState={setState}
               selectedAvatar={selectedAvatar}
               keyboardEnabled={keyboardEnabled}
+              openActivitiesPanel={openActivitiesPanel}
             />
           )}
         </section>

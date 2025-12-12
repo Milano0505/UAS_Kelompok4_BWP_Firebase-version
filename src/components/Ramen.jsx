@@ -7,6 +7,7 @@ export default function Ramen({
   setState,
   selectedAvatar,
   keyboardEnabled,
+  openActivitiesPanel,
 }) {
   const [player, setPlayer] = useState({ x: 193, y: 454 });
   const containerRef = useRef(null);
@@ -242,6 +243,13 @@ export default function Ramen({
 
   return (
     <div className="ramen-container" ref={containerRef}>
+      <button
+        className="activities-btn"
+        onClick={() => openActivitiesPanel("ramen")}
+      >
+        Activities List
+      </button>
+
       <div
         className="ramen-map-wrapper"
         style={{

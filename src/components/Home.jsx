@@ -7,6 +7,7 @@ export default function Home({
   setState,
   selectedAvatar,
   keyboardEnabled,
+  openActivitiesPanel,
 }) {
   const [player, setPlayer] = useState({ x: 188, y: 448 });
 
@@ -278,6 +279,12 @@ export default function Home({
 
   return (
     <div className="home-container" ref={containerRef}>
+      <button
+        className="activities-btn"
+        onClick={() => openActivitiesPanel("home")}
+      >
+        Activities List
+      </button>
       <div
         className="home-map-wrapper"
         style={{

@@ -7,6 +7,7 @@ export default function Hospital({
   setState,
   selectedAvatar,
   keyboardEnabled,
+  openActivitiesPanel,
 }) {
   const MAP_W = 736;
   const MAP_H = 736;
@@ -279,6 +280,13 @@ export default function Hospital({
 
   return (
     <div className="hospital-container" ref={containerRef}>
+      <button
+        className="activities-btn"
+        onClick={() => openActivitiesPanel("hospital")}
+      >
+        Activities List
+      </button>
+
       <div
         className="hospital-map-wrapper"
         style={{

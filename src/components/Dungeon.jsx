@@ -7,6 +7,7 @@ export default function Dungeon({
   setState,
   selectedAvatar,
   keyboardEnabled,
+  openActivitiesPanel,
 }) {
   const MAP_W = 925;
   const MAP_H = 529;
@@ -229,9 +230,9 @@ export default function Dungeon({
     currentPerTickEffectRef.current = perTickEffect;
 
     if (name === "Fight") setEffectType("attack-effect");
-  else if (name === "Loot") setEffectType("gold-effect");
-  else if (name === "Explore") setEffectType("explore-effect");
-  else setEffectType(null);
+    else if (name === "Loot") setEffectType("gold-effect");
+    else if (name === "Explore") setEffectType("explore-effect");
+    else setEffectType(null);
 
     activityTimerRef.current = setInterval(() => {
       setActivity((a) => {
@@ -269,6 +270,13 @@ export default function Dungeon({
 
   return (
     <div className="dungeon-container" ref={containerRef}>
+      <button
+        className="activities-btn"
+        onClick={() => openActivitiesPanel("dungeon")}
+      >
+        Activities List
+      </button>
+
       <div
         className="dungeon-map-wrapper"
         style={{

@@ -7,6 +7,7 @@ export default function Mine({
   setState,
   selectedAvatar,
   keyboardEnabled,
+  openActivitiesPanel,
 }) {
   const [player, setPlayer] = useState({ x: 522, y: 263 });
 
@@ -310,6 +311,13 @@ export default function Mine({
 
   return (
     <div className="mine-container" ref={containerRef}>
+      <button
+        className="activities-btn"
+        onClick={() => openActivitiesPanel("mine")}
+      >
+        Activities List
+      </button>
+
       <div
         className="mine-map-wrapper"
         style={{
