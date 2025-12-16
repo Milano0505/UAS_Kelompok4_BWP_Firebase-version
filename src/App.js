@@ -228,6 +228,7 @@ function Map({
   onEnterLocation,
   locs,
   onPickupDropped,
+  highlightTarget,
 }) {
   const mapRef = useRef();
 
@@ -242,7 +243,7 @@ function Map({
         <div
           key={l.id}
           id={l.id}
-          className="loc"
+          className={`loc ${highlightTarget === l.id ? "highlight" : ""}`}
           style={{
             left: `${l.leftPercent}%`,
             top: `${l.topPercent}%`,
@@ -288,7 +289,7 @@ function Map({
               height: `${size}px`,
               fontSize: `${size}px`,
             }}
-            onMouseEnter={() => onPickupDropped?.(i)}
+            onClick={() => onPickupDropped?.(i)}
           >
             {it.icon || "🎁"}
           </div>
@@ -763,6 +764,51 @@ export default function App() {
       ],
     });
   }
+
+  const [highlightTarget, setHighlightTarget] = useState(null);
+  const highlightTimerRef = useRef(null);
+
+  function closeActivitiesPanel() {
+    setShowActivitiesPanel(false);
+    setHighlightTarget(null);
+  }
+
+  const ACTIVITY_AREA_MAP = {
+    outdoor: {
+      "Enter Home": "home",
+      "Enter Dungeon": "dungeon",
+      "Enter Mine": "mine",
+      "Enter Hospital": "hospital",
+      "Enter Ramen Shop": "ramen",
+    },
+    home: {
+      "Use Bath": "bath",
+      Sleep: "sleep",
+      "Eat Meal": "eat",
+      Relax: "relax",
+    },
+    mine: {
+      "Clean Tools": "clean",
+      "Mine Ores": "mine",
+      "Sell Ores": "sell",
+      Rest: "rest",
+    },
+    dungeon: {
+      "Fight Monsters": "fight",
+      "Loot Items": "loot",
+      Explore: "explore",
+    },
+    hospital: {
+      Checkup: "checkup",
+      Rest: "rest",
+      "Donate Blood": "donate",
+    },
+    ramen: {
+      "Eat Ramen": "buy",
+      "Chat With Owner": "chat",
+      "Part-Time Work": "work",
+    },
+  };
 
   const moveInterval = useRef(null);
 
@@ -1293,6 +1339,7 @@ export default function App() {
                 locs={locs}
                 onEnterLocation={openLocation}
                 onPickupDropped={pickupDropped}
+                highlightTarget={highlightTarget}
               />
               <Controls startHold={startHold} stopHold={stopHold} />
               <button
@@ -1315,11 +1362,30 @@ export default function App() {
               <div className="box">
                 <h1>Activities List</h1>
 
-                <ul className="activities-ul">
+                <div className="activities-buttons">
                   {activitiesList.map((item, idx) => (
-                    <li key={idx}>{item}</li>
+                    <button
+                      key={idx}
+                      className="activity-item-btn"
+                      onClick={() => {
+                        const target = ACTIVITY_AREA_MAP[mode]?.[item];
+
+                        setHighlightTarget(target || null);
+
+                        if (highlightTimerRef.current) {
+                          clearTimeout(highlightTimerRef.current);
+                        }
+
+                        highlightTimerRef.current = setTimeout(() => {
+                          setHighlightTarget(null);
+                          highlightTimerRef.current = null;
+                        }, 5000);
+                      }}
+                    >
+                      {item}
+                    </button>
                   ))}
-                </ul>
+                </div>
 
                 <button className="close-btn" onClick={closeActivitiesPanel}>
                   Close
@@ -1336,6 +1402,7 @@ export default function App() {
               selectedAvatar={selectedAvatar}
               keyboardEnabled={keyboardEnabled}
               openActivitiesPanel={openActivitiesPanel}
+              highlightTarget={highlightTarget}
             />
           )}
 
@@ -1347,6 +1414,7 @@ export default function App() {
               selectedAvatar={selectedAvatar}
               keyboardEnabled={keyboardEnabled}
               openActivitiesPanel={openActivitiesPanel}
+              highlightTarget={highlightTarget}
             />
           )}
 
@@ -1358,6 +1426,7 @@ export default function App() {
               selectedAvatar={selectedAvatar}
               keyboardEnabled={keyboardEnabled}
               openActivitiesPanel={openActivitiesPanel}
+              highlightTarget={highlightTarget}
             />
           )}
 
@@ -1369,6 +1438,7 @@ export default function App() {
               selectedAvatar={selectedAvatar}
               keyboardEnabled={keyboardEnabled}
               openActivitiesPanel={openActivitiesPanel}
+              highlightTarget={highlightTarget}
             />
           )}
 
@@ -1380,6 +1450,7 @@ export default function App() {
               selectedAvatar={selectedAvatar}
               keyboardEnabled={keyboardEnabled}
               openActivitiesPanel={openActivitiesPanel}
+              highlightTarget={highlightTarget}
             />
           )}
         </section>

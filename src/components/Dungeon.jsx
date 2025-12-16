@@ -8,6 +8,7 @@ export default function Dungeon({
   selectedAvatar,
   keyboardEnabled,
   openActivitiesPanel,
+  highlightTarget,
 }) {
   const MAP_W = 925;
   const MAP_H = 529;
@@ -161,10 +162,10 @@ export default function Dungeon({
     {
       id: "exit",
       label: "Exit Dungeon",
-      x: 277,
-      y: 37,
-      w: 121,
-      h: 98,
+      x: 584,
+      y: 206,
+      w: 116,
+      h: 118,
       action: () => onExitDungeon(),
     },
   ];
@@ -290,6 +291,25 @@ export default function Dungeon({
           className="dungeon-map"
           style={{ backgroundImage: `url(${dungeonBg})` }}
         >
+          {areas.map((a) => {
+            if (highlightTarget !== a.id) return null;
+
+            const r = getScaledRect(a);
+
+            return (
+              <div
+                key={a.id}
+                className="area-highlight"
+                style={{
+                  left: r.left,
+                  top: r.top,
+                  width: r.right - r.left,
+                  height: r.bottom - r.top,
+                }}
+              />
+            );
+          })}
+
           <img
             src={
               dir === "left"

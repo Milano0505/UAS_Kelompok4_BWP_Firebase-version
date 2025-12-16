@@ -287,24 +287,6 @@ body {
   color: black;
 }
 
-.activities-ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  color: black;
-}
-
-.activities-ul li {
-  background: #f2f2f2;
-  padding: 10px 12px;
-  border-radius: 10px;
-  font-size: 16px;
-  color: black;
-}
-
 .close-btn {
   padding: 10px 16px;
   border: none;
@@ -336,6 +318,68 @@ body {
 
 .activities-btn:hover {
   background: #555;
+}
+
+.activities-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.activity-item-btn {
+  padding: 10px 14px;
+  background: blue;
+  color: white;
+  border: 1px solid #555;
+  border-radius: 8px;
+  font-size: 14px;
+  text-align: center;
+  cursor: pointer;
+
+  transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+}
+
+.activity-item-btn:hover {
+  background: purple;
+  box-shadow: 0 0 6px rgba(255, 215, 0, 0.4);
+}
+
+.activity-item-btn:active {
+  transform: scale(0.97);
+}
+
+.activity-item-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.5);
+}
+
+/* ==========================================
+    AREA HIGHLIGHT 
+=============================================*/
+
+.loc.highlight {
+  outline: 3px solid gold;
+  animation: pulse 1s infinite;
+}
+
+.area-highlight {
+  position: absolute;
+  border: 3px solid gold;
+  background: rgba(255, 215, 0, 0.25);
+  pointer-events: none;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 /* ===========================
@@ -1268,8 +1312,8 @@ body {
 =========================== */
 .dungeon-map {
   position: relative;
-  width: 1000px;
-  height: 600px;
+  width: 925px;
+  height: 529px;
   border: 2px solid #333;
   border-radius: 12px;
   overflow: hidden;

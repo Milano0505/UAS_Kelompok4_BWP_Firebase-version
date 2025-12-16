@@ -8,6 +8,7 @@ export default function Home({
   selectedAvatar,
   keyboardEnabled,
   openActivitiesPanel,
+  highlightTarget,
 }) {
   const [player, setPlayer] = useState({ x: 188, y: 448 });
 
@@ -301,6 +302,22 @@ export default function Home({
             backgroundImage: `url(${homeBg})`,
           }}
         >
+          {areas.map(
+            (a) =>
+              highlightTarget === a.id && (
+                <div
+                  key={a.id}
+                  className="area-highlight"
+                  style={{
+                    left: a.x,
+                    top: a.y,
+                    width: a.w,
+                    height: a.h,
+                  }}
+                />
+              )
+          )}
+
           <img
             src={
               dir === "left"

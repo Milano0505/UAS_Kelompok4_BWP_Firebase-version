@@ -8,6 +8,7 @@ export default function Mine({
   selectedAvatar,
   keyboardEnabled,
   openActivitiesPanel,
+  highlightTarget,
 }) {
   const [player, setPlayer] = useState({ x: 522, y: 263 });
 
@@ -336,6 +337,21 @@ export default function Mine({
             backgroundImage: `url(${mineBg})`,
           }}
         >
+          {areas.map(a => (
+            highlightTarget === a.id && (
+              <div
+                key={a.id}
+                className="area-highlight"
+                style={{
+                  left: a.x,
+                  top: a.y,
+                  width: a.w,
+                  height: a.h,
+                }}
+              />
+            )
+          ))}
+
           <img
             src={
               dir === "left"

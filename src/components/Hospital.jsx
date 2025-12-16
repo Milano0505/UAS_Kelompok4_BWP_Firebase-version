@@ -8,6 +8,7 @@ export default function Hospital({
   selectedAvatar,
   keyboardEnabled,
   openActivitiesPanel,
+  highlightTarget,
 }) {
   const MAP_W = 736;
   const MAP_H = 736;
@@ -306,6 +307,25 @@ export default function Hospital({
             position: "relative",
           }}
         >
+          {areas.map((a) => {
+            if (highlightTarget !== a.id) return null;
+
+            const r = getScaledRect(a);
+
+            return (
+              <div
+                key={a.id}
+                className="area-highlight"
+                style={{
+                  left: r.left,
+                  top: r.top,
+                  width: r.right - r.left,
+                  height: r.bottom - r.top,
+                }}
+              />
+            );
+          })}
+
           <img
             src={
               dir === "left"

@@ -8,6 +8,7 @@ export default function Ramen({
   selectedAvatar,
   keyboardEnabled,
   openActivitiesPanel,
+  highlightTarget,
 }) {
   const [player, setPlayer] = useState({ x: 193, y: 454 });
   const containerRef = useRef(null);
@@ -264,6 +265,22 @@ export default function Ramen({
           ref={mapRef}
           style={{ backgroundImage: `url(${ramenBg})` }}
         >
+          {areas.map(
+            (a) =>
+              highlightTarget === a.id && (
+                <div
+                  key={a.id}
+                  className="area-highlight"
+                  style={{
+                    left: a.x,
+                    top: a.y,
+                    width: a.w,
+                    height: a.h,
+                  }}
+                />
+              )
+          )}
+
           <img
             src={
               dir === "left"
