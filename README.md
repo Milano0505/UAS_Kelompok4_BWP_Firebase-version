@@ -66,6 +66,7 @@ Monitor and maintain 5 core stats:
 
 - **Real-time Clock**: Game time advances every second
 - **Day/Night Cycle**: Different greetings based on time of day
+- **Weather System** : 4 weather types (Sunny, Rainy, Hot, Windy) that change every 3 hours and affect stat decay rates
 - **Activity Tracking**: Count completed activities for scoring
 - **Life Score**: Final score based on stats, activities, items, and visited areas
 
@@ -91,6 +92,7 @@ Monitor and maintain 5 core stats:
 - **Activities**: Position character over highlighted areas
 - **Inventory**: Click inventory button to manage items
 - **Activities List**: View available activities in each location
+- **Teleport**: Click on location icons to instantly teleport
 
 ## 🏆 Scoring System
 

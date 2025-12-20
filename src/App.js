@@ -66,6 +66,7 @@ const DEFAULT_STATE = {
   visitedAreas: [],
 
   ore: 0,
+  weather: "sunny", // sunny, rainy, hot, windy
 };
 
 function preloadImages(srcArray) {
@@ -97,7 +98,18 @@ function Header({
   user,
   onLoginClick,
   onLogoutClick,
+  weather,
 }) {
+  const getWeatherIcon = (w) => {
+    switch (w) {
+      case "sunny": return "☀️";
+      case "rainy": return "🌧️";
+      case "hot": return "🔥";
+      case "windy": return "💨";
+      default: return "☀️";
+    }
+  };
+
   return (
     <header className="header">
       <div className="left">
@@ -112,6 +124,7 @@ function Header({
         )}
         <div id="greeting">{greeting}</div>
         <div id="time">{timeText}</div>
+        <div id="weather">{getWeatherIcon(weather)} {weather.charAt(0).toUpperCase() + weather.slice(1)}</div>
       </div>
       <div className="title">UMN RPG Adventure Life</div>
       <div className="right">
@@ -229,6 +242,7 @@ function Map({
   locs,
   onPickupDropped,
   highlightTarget,
+  onInstantEnter,
 }) {
   const mapRef = useRef();
 
@@ -248,6 +262,7 @@ function Map({
             left: `${l.leftPercent}%`,
             top: `${l.topPercent}%`,
           }}
+          onClick={() => onInstantEnter(l.id)}
         >
           <div className="koko">
             <img src={l.img} alt={l.label} />
@@ -498,6 +513,7 @@ export default function App() {
 
   const [gameMinutes, setGameMinutes] = useState(0);
   const [greeting, setGreeting] = useState("Good morning");
+  const [nextWeatherChange, setNextWeatherChange] = useState(180); // Start with 3 hours (180 minutes)
   const lastMoveRef = useRef(Date.now());
   const tickRef = useRef(null);
   const timeRef = useRef(null);
@@ -765,6 +781,32 @@ export default function App() {
     });
   }
 
+  function instantEnterLocation(locId) {
+    // Teleport player to near the location on the map
+    const loc = locs.find(l => l.id === locId);
+    if (loc) {
+      const map = document.getElementById("map");
+      if (map) {
+        const rect = map.getBoundingClientRect();
+        const newLeftPercent = loc.leftPercent;
+        const newTopPercent = loc.topPercent + 10; // offset a bit below
+        const newLeft = (newLeftPercent / 100) * rect.width;
+        const newTop = (newTopPercent / 100) * rect.height;
+
+        setPlayerPos((prev) => ({
+          ...prev,
+          left: newLeft,
+          top: newTop,
+          leftPercent: newLeftPercent,
+          topPercent: newTopPercent,
+        }));
+      }
+      showMessage(`Teleported to ${locId}!`);
+      // Show action panel immediately after teleport
+      openLocation(locId);
+    }
+  }
+
   const [highlightTarget, setHighlightTarget] = useState(null);
   const highlightTimerRef = useRef(null);
 
@@ -821,12 +863,33 @@ export default function App() {
 
     tickRef.current = setInterval(() => {
       setState((s) => {
+        // Weather effects on stat decay
+        let mealDecay = 0.8;
+        let sleepDecay = 0.5;
+        let hygieneDecay = 0.3;
+        let happyDecay = 0.4;
+
+        switch (s.weather) {
+          case "sunny":
+            happyDecay -= 0.2; // Happiness increases faster in sunny weather
+            break;
+          case "rainy":
+            sleepDecay += 0.2; // Energy decreases faster in rainy weather
+            break;
+          case "hot":
+            hygieneDecay += 0.2; // Hygiene decreases faster in hot weather
+            break;
+          case "windy":
+            sleepDecay -= 0.2; // Energy decreases slower in windy weather (easier exploration)
+            break;
+        }
+
         const ns = {
           ...s,
-          meal: clamp(s.meal - 0.8),
-          sleep: clamp(s.sleep - 0.5),
-          hygiene: clamp(s.hygiene - 0.3),
-          happy: clamp(s.happy - 0.4),
+          meal: clamp(s.meal - mealDecay),
+          sleep: clamp(s.sleep - sleepDecay),
+          hygiene: clamp(s.hygiene - hygieneDecay),
+          happy: clamp(s.happy - happyDecay),
           money: s.money,
         };
 
@@ -875,6 +938,28 @@ export default function App() {
         else greet = "Good night 🌙";
 
         setGreeting(greet);
+
+        // Weather changes every 3 hours
+        if (next % 180 === 0 && next > 0) {
+          setState((s) => {
+            const weathers = ["sunny", "rainy", "hot", "windy"];
+            let nextWeather;
+            do {
+              nextWeather = weathers[Math.floor(Math.random() * weathers.length)];
+            } while (nextWeather === s.weather); // Ensure different weather
+
+            const weatherMessages = {
+              sunny: "The sun is shining brightly! Perfect weather for outdoor activities - happiness increases faster!",
+              rainy: "It's raining heavily! Stay indoors to conserve energy, or you'll tire out quickly.",
+              hot: "The weather is scorching hot! Take frequent baths to maintain hygiene.",
+              windy: "Strong winds are blowing! Exploration is easier, but be careful not to get blown away!"
+            };
+
+            showMessage(weatherMessages[nextWeather]);
+
+            return { ...s, weather: nextWeather };
+          });
+        }
 
         if (Math.random() < 0.05) spawnRandomItem();
 
@@ -1119,10 +1204,10 @@ export default function App() {
           ns.happy = clamp(ns.happy + 5);
           break;
         case "a bag of coin":
-          ns.money += 10;
+          ns.money = clamp(ns.money + 10);
           break;
         case "gem":
-          ns.money += 50;
+          ns.money = clamp(ns.money + 50);
           break;
         default:
           break;
@@ -1254,6 +1339,8 @@ export default function App() {
 
     startTicking();
     startTiming();
+
+    showMessage("Game restarted! The weather is sunny - perfect for outdoor activities!");
   }
 
   useEffect(() => {
@@ -1325,6 +1412,7 @@ export default function App() {
         user={user}
         onLoginClick={() => setShowLogin(true)}
         onLogoutClick={handleLogout}
+        weather={state.weather}
       />
 
       <main className="main">
@@ -1340,6 +1428,7 @@ export default function App() {
                 onEnterLocation={openLocation}
                 onPickupDropped={pickupDropped}
                 highlightTarget={highlightTarget}
+                onInstantEnter={instantEnterLocation}
               />
               <Controls startHold={startHold} stopHold={stopHold} />
               <button

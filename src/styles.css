@@ -167,7 +167,7 @@ body {
   font-weight: bold;
   color: #fff;
   width: 80px;
-  pointer-events: none;
+  cursor: pointer;
 }
 
 .loc .koko img {
