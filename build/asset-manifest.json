@@ -1,0 +1,24 @@
+{
+  "files": {
+    "main.css": "/static/css/main.8d5dea58.css",
+    "main.js": "/static/js/main.e784675e.js",
+    "static/media/Mine.jpg": "/static/media/Mine.211ff478165f083b5950.jpg",
+    "static/media/ramen.png": "/static/media/ramen.a536d62ba81a54a3664d.png",
+    "static/media/utama.jpg": "/static/media/utama.55ff132d3b070df35929.jpg",
+    "static/media/Hospital.jpg": "/static/media/Hospital.1a11e562b007555f4244.jpg",
+    "static/media/home.png": "/static/media/home.1b2ab8ea90f8daf21352.png",
+    "static/media/Dungeon.jpg": "/static/media/Dungeon.ca7697054548dc9c69b0.jpg",
+    "static/media/hospital.png": "/static/media/hospital.d1ca4ff3fc6947a6ab84.png",
+    "static/media/dungeon.png": "/static/media/dungeon.3be41cd29f495825d32e.png",
+    "static/media/Home.jpeg": "/static/media/Home.0dfef53b2eac244f3d95.jpeg",
+    "static/media/Ramen.jpg": "/static/media/Ramen.2946cecd6fd252515072.jpg",
+    "static/media/mining.png": "/static/media/mining.c0e284f79b5813d130ee.png",
+    "index.html": "/index.html",
+    "main.8d5dea58.css.map": "/static/css/main.8d5dea58.css.map",
+    "main.e784675e.js.map": "/static/js/main.e784675e.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.8d5dea58.css",
+    "static/js/main.e784675e.js"
+  ]
+}
