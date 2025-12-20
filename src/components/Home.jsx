@@ -100,7 +100,7 @@ export default function Home({
           setState((s) => ({
             ...s,
             hygiene: Math.min(100, s.hygiene + 5),
-            happy: s.happy + 0.5,
+            happy: Math.min(100, s.happy + 0.5),
           }))
         ),
     },
@@ -116,8 +116,8 @@ export default function Home({
         startActivity("Sleeping", 10, () =>
           setState((s) => ({
             ...s,
-            sleep: s.sleep + 4,
-            happy: s.happy + 0.8,
+            sleep: Math.min(100, s.sleep + 4),
+            happy: Math.min(100, s.happy + 0.8),
             hygiene: s.hygiene - 1,
           }))
         ),
@@ -132,7 +132,7 @@ export default function Home({
       h: 133,
       action: () =>
         startActivity("Eating", 6, () =>
-          setState((s) => ({ ...s, meal: s.meal + 6, happy: s.happy + 1 }))
+          setState((s) => ({ ...s, meal: Math.min(100, s.meal + 6), happy: Math.min(100, s.happy + 1) }))
         ),
     },
 
@@ -145,7 +145,7 @@ export default function Home({
       h: 142,
       action: () =>
         startActivity("Relaxing", 5, () =>
-          setState((s) => ({ ...s, happy: s.happy + 4 }))
+          setState((s) => ({ ...s, happy: Math.min(100, s.happy + 4) }))
         ),
     },
 
